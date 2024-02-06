@@ -3,6 +3,7 @@ package com.davidrevolt.feature.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.davidrevolt.core.ble.BluetoothLe
 import com.davidrevolt.core.data.repository.BluetoothLowEnergyRepository
 import com.davidrevolt.core.data.utils.snackbarmanager.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val bluetoothLowEnergyRepository: BluetoothLowEnergyRepository,
+    private val ble:BluetoothLe,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
@@ -39,11 +41,11 @@ class HomeViewModel @Inject constructor(
             initialValue = HomeUiState.Loading
         )*/
 
-    fun onSaveClick() {
+    fun startBluetoothLeScan() {
         viewModelScope.launch {
             _isSyncing.value = true
             try {
-
+                ble.startBluetoothLeScan()
             } catch (e: Exception) {
                 Log.e("AppLog", "${e.message}")
                 snackbarManager.snackbarMessage("${e.message}")

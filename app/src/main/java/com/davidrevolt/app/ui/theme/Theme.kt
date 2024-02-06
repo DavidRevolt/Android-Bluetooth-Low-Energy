@@ -60,7 +60,7 @@ fun AppTheme(
             window.navigationBarColor = android.graphics.Color.TRANSPARENT  // here change the color
 
             // here change the status bar element color
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val locale = Locale("en")
         Locale.setDefault(locale)
+
         setContent {
             AppTheme {
                 val context = LocalContext.current
