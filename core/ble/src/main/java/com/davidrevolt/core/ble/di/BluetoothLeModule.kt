@@ -1,10 +1,8 @@
 package com.davidrevolt.core.ble.di
 
-import android.bluetooth.le.BluetoothLeScanner
 import android.content.Context
 import com.davidrevolt.core.ble.BluetoothLe
 import com.davidrevolt.core.ble.BluetoothLeImpl
-import com.davidrevolt.core.ble.util.Scanner
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -22,7 +20,8 @@ abstract class BluetoothLeModule {
     companion object {
         @Provides
         @Singleton
-        fun provideBluetoothLeScanner(@ApplicationContext context: Context): Scanner = Scanner(context)
+        fun provideBluetoothLeScanner(@ApplicationContext context: Context): com.davidrevolt.core.ble.util.BluetoothLeScanner =
+            com.davidrevolt.core.ble.util.BluetoothLeScanner(context)
 
     }
 }

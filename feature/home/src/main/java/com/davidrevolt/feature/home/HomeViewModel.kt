@@ -1,5 +1,6 @@
 package com.davidrevolt.feature.home
 
+import android.bluetooth.le.ScanResult
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,16 +18,13 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val bluetoothLowEnergyRepository: BluetoothLowEnergyRepository,
-    private val ble:BluetoothLe,
+    private val ble: BluetoothLe,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
 
-    private val _isSyncing = MutableStateFlow(false)
-    private val _stringsData = MutableStateFlow(listOf("David","Manshari"))
-
-    val homeUiState = combine(_isSyncing, _stringsData) { isSyncing, stringsData ->
-        HomeUiState.Data(isSyncing, stringsData)
+    val homeUiState = combine(ble.isScanning(), ble.getScanResults()) { isScanning, scanResults ->
+        HomeUiState.Data(isScanning = isScanning, scanResults = scanResults)
     }
         .stateIn(
             scope = viewModelScope,
@@ -34,29 +32,31 @@ class HomeViewModel @Inject constructor(
             initialValue = HomeUiState.Loading
         )
 
-/*    val homeUiState = _isSyncing.map(HomeUiState::Data)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = HomeUiState.Loading
-        )*/
-
     fun startBluetoothLeScan() {
         viewModelScope.launch {
-            _isSyncing.value = true
             try {
                 ble.startBluetoothLeScan()
             } catch (e: Exception) {
                 Log.e("AppLog", "${e.message}")
                 snackbarManager.snackbarMessage("${e.message}")
             }
-            _isSyncing.value = false
+        }
+    }
+
+    fun stopBluetoothLeScan() {
+        viewModelScope.launch {
+            try {
+                ble.stopBluetoothLeScan()
+            } catch (e: Exception) {
+                Log.e("AppLog", "${e.message}")
+                snackbarManager.snackbarMessage("${e.message}")
+            }
         }
     }
 }
 
 sealed interface HomeUiState {
-    data class Data(val isSyncing: Boolean, val stringsData:List<String>) :
+    data class Data(val isScanning: Boolean, val scanResults: List<ScanResult>) :
         HomeUiState
 
     data object Loading : HomeUiState

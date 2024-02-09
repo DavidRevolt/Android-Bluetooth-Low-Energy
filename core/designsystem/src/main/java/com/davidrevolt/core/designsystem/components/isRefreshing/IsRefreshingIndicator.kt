@@ -1,4 +1,4 @@
-package com.davidrevolt.core.designsystem.components.isSyncing
+package com.davidrevolt.core.designsystem.components.isRefreshing
 
 
 import androidx.compose.animation.core.LinearEasing
@@ -33,20 +33,20 @@ import com.davidrevolt.core.designsystem.R
 
 @Composable
 fun PullToRefreshIndicator(
+    isRefreshingText: String,
     state: PullToRefreshState,
     refreshTriggerDistance: Dp,
     refreshingOffset: Dp,
     indicatorTextStyle: TextStyle,
     indicatorIconSize: Dp,
     indicatorIconColor: Color,
-    modifier: Modifier = Modifier
 ) {
     val refreshTriggerPx = with(LocalDensity.current) { refreshTriggerDistance.toPx() }
     val refreshingOffsetPx = with(LocalDensity.current) { refreshingOffset.toPx() }
     val indicatorHeight = 48.dp
     val indicatorHeightPx = with(LocalDensity.current) { indicatorHeight.toPx() }
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(indicatorHeight)
             .padding(end = 26.dp)
@@ -95,8 +95,8 @@ fun PullToRefreshIndicator(
             text =
             when {
                 state.isPullInProgress && state.contentOffset >= refreshTriggerPx -> "release_to_refresh"
-                state.isRefreshing -> "Syncing with network"
-                else -> "pull_to_refresh"
+                state.isRefreshing -> isRefreshingText
+                else -> isRefreshingText
             }
             ,
             style = indicatorTextStyle

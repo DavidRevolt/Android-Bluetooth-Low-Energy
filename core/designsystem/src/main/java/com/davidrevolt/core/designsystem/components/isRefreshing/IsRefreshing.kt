@@ -1,4 +1,4 @@
-package com.davidrevolt.core.designsystem.components.isSyncing
+package com.davidrevolt.core.designsystem.components.isRefreshing
 
 
 import androidx.annotation.FloatRange
@@ -49,16 +49,16 @@ import kotlin.math.absoluteValue
  * @param isRefreshing the value for [PullToRefreshState.isRefreshing]
  */
 @Composable
-fun rememberIsSyncingState(
+fun rememberIsRefreshingState(
     isRefreshing: Boolean
 ): PullToRefreshState = remember {
     PullToRefreshState(isRefreshing)
 }.apply { this.isRefreshing = isRefreshing }
 
 /**
- * A state object that can be hoisted to control and observe changes for [IsSyncing].
+ * A state object that can be hoisted to control and observe changes for [isRefreshing].
  *
- * In most cases, this will be created via [rememberIsSyncingState].
+ * In most cases, this will be created via [rememberIsRefreshingState].
  *
  * @param isRefreshing the initial value for [PullToRefreshState.isRefreshing]
  */
@@ -199,7 +199,8 @@ private class PullToRefreshNestedScrollConnection(
  * If an app wishes to show the progress animation outside of a swipe gesture, it can
  * set [PullToRefreshState.isRefreshing] as required.
  *
- * @param state the state object to be used to control or observe the [IsSyncing] state.
+ * @param isRefreshingText Text to show when refreshing.
+ * @param state the state object to be used to control or observe the [isRefreshing] state.
  * @param onRefresh Lambda which is invoked when a pull to refresh gesture is completed.
  * @param modifier The modifier to apply to this layout.
  * @param enabled Whether the the layout should react to pull gestures or not.
@@ -215,20 +216,21 @@ private class PullToRefreshNestedScrollConnection(
  * @param content The content containing a scroll composable.
  */
 @Composable
-fun IsSyncing(
-    state: PullToRefreshState,
-    onRefresh: () -> Unit,
+fun IsRefreshing(
     modifier: Modifier = Modifier,
+    isRefreshingText: String = "Refreshing",
+    state: PullToRefreshState,
+    onRefresh: () -> Unit ={},
     enabled: Boolean = true,
-    indicatorTextStyle: TextStyle = TextStyle.Default.copy(color = Color.White, fontSize = 14.sp),
+    indicatorTextStyle: TextStyle = TextStyle.Default.copy(color = Color.Black, fontSize = 14.sp),
     indicatorIconSize: Dp = 18.dp,
-    indicatorIconColor: Color = Color.White,
+    indicatorIconColor: Color = Color.Black,
     @FloatRange(from = 0.0, to = 1.0) dragMultiplier: Float = 0.5f,
     refreshTriggerDistance: Dp = 60.dp,
     refreshingOffset: Dp = refreshTriggerDistance,
     indicatorPadding: PaddingValues = PaddingValues(0.dp),
     indicator: @Composable (state: PullToRefreshState, refreshTrigger: Dp, refreshingOffset: Dp) -> Unit = { s, trigger, offset ->
-        PullToRefreshIndicator(s, trigger, offset, indicatorTextStyle, indicatorIconSize, indicatorIconColor)
+        PullToRefreshIndicator(isRefreshingText,s, trigger, offset, indicatorTextStyle, indicatorIconSize, indicatorIconColor)
     },
     clipIndicatorToPadding: Boolean = true,
     content: @Composable () -> Unit,

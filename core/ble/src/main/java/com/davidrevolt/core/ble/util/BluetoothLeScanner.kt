@@ -13,6 +13,9 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 /*
@@ -41,7 +44,7 @@ typically to find a very specific type of device.
 SCAN_MODE_LOW_POWER is used for extremely long-duration scans, or for scans that take place in the background
  */
 
-class Scanner @Inject constructor(
+class BluetoothLeScanner @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
@@ -49,10 +52,12 @@ class Scanner @Inject constructor(
         ContextCompat.getSystemService(context, BluetoothManager::class.java)
     private val _bluetoothAdapter: BluetoothAdapter? = _bluetoothManager?.adapter
 
-    private var _isScanning = false
+    private var _isScanning = MutableStateFlow(false)
 
     // Holds devices found through scanning.
-    private val _scanResults = mutableListOf<ScanResult>()
+    private val _checkIfExists = mutableMapOf<String, Int>() // MAC to List Ind
+    private val _scanResults = MutableStateFlow(mutableListOf<ScanResult>())
+
 
     /*
     * onScanResult callback is flooded by ScanResults belonging to the same set of devices,
@@ -62,14 +67,17 @@ class Scanner @Inject constructor(
         @RequiresApi(Build.VERSION_CODES.S)
         @RequiresPermission(anyOf = [Manifest.permission.BLUETOOTH_CONNECT])
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            // Check device is already in the result list
-            val indexQuery = _scanResults.indexOfFirst { it.device.address == result.device.address }
-            if(indexQuery==-1){
-                _scanResults.add(result)
-                Log.i("AppLog", "Found BLE device! Name: ${result.device.name }, address: ${result.device.address}")
-            }
-            else{
-                _scanResults[indexQuery] = result
+            // IF device is already exists in list it will update
+            val ind = _checkIfExists[result.device.address]
+            if(ind !=null)
+                _scanResults.update { _scanResults.value.toMutableList().apply { this[ind] = result } }
+            else { // Not exists = New device
+                _scanResults.update { _scanResults.value.toMutableList().apply { this.add(result) } }
+                _checkIfExists[result.device.address] = _scanResults.value.size-1
+                Log.i(
+                    "AppLog",
+                    "Found BLE device! Name: ${result.device.name}, address: ${result.device.address}"
+                )
             }
         }
 
@@ -78,17 +86,21 @@ class Scanner @Inject constructor(
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(anyOf = [Manifest.permission.BLUETOOTH_SCAN])
     fun startBluetoothLeScan() {
         if (_bluetoothAdapter != null && _bluetoothAdapter.isEnabled) {
+            if (_isScanning.value) {
+                stopBluetoothLeScan()
+                _scanResults.update { _scanResults.value.toMutableList().apply { this.clear() } }
+                _checkIfExists.clear()
+            }
             val scanSettings = ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build()
             val bleScanner = _bluetoothAdapter.bluetoothLeScanner
             bleScanner.startScan(null, scanSettings, _scanCallback)
-            _isScanning = true
+            _isScanning.value = true
         } else {
             Log.e("AppLog", "Device doesn't support Bluetooth or Bluetooth is disabled")
         }
@@ -101,10 +113,12 @@ class Scanner @Inject constructor(
             val bleScanner = _bluetoothAdapter.bluetoothLeScanner
             bleScanner.stopScan(_scanCallback)
             Log.i("AppLog", "Bluetooth scanning stopped")
-            _isScanning = false
+            _isScanning.value = false
         }
     }
 
-    fun isScanning() = _isScanning
+    fun isScanning() = _isScanning.asStateFlow()
+
+    fun getScanResults() = _scanResults.asStateFlow()
 }
 
