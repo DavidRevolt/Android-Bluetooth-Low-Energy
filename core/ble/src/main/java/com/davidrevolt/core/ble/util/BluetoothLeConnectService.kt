@@ -1,18 +1,21 @@
 package com.davidrevolt.core.ble.util
 
 import android.Manifest
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice.ADDRESS_TYPE_PUBLIC
 import android.bluetooth.BluetoothDevice.TRANSPORT_LE
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,9 @@ Online Guide: https://punchthrough.com/android-ble-guide/
 class BluetoothLeConnectService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val _bluetoothManager: BluetoothManager? =
+        ContextCompat.getSystemService(context, BluetoothManager::class.java)
+    private val _bluetoothAdapter: BluetoothAdapter? = _bluetoothManager?.adapter
 
     private var _bluetoothGatt: BluetoothGatt? = null
     private val _connectionState = MutableStateFlow(BluetoothProfile.STATE_DISCONNECTED)
@@ -122,22 +128,29 @@ class BluetoothLeConnectService @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
-    fun connectToDeviceGatt(device: BluetoothDevice) {
-        _bluetoothGatt = device.connectGatt(context, false, gattCallback, TRANSPORT_LE)
+    fun connectToDeviceGatt(deviceAddress: String) {
+        _connectionState.value = BluetoothProfile.STATE_CONNECTING
+       val device = _bluetoothAdapter?.getRemoteLeDevice(deviceAddress,ADDRESS_TYPE_PUBLIC)
+        _bluetoothGatt = device?.connectGatt(context, false, gattCallback, TRANSPORT_LE)
     }
 
     //TODO: Check if need to delete log because callback as methods already
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    fun disconnectFromGatt(bluetoothGatt: BluetoothGatt) {
-        bluetoothGatt.close()
-        Log.i(
-            "AppLog",
-            "Trying to disconnect from ${bluetoothGatt.device.name ?: bluetoothGatt.device.address}"
-        )
+    fun disconnectFromGatt() {
+        _connectionState.value = BluetoothProfile.STATE_DISCONNECTING
+        val deviceName = _bluetoothGatt?.device?.name ?: _bluetoothGatt?.device?.address
+        Log.i("AppLog", "Disconnected from $deviceName")
+        _bluetoothGatt?.disconnect()
+        _bluetoothGatt?.close()
+        _connectionState.value = BluetoothProfile.STATE_DISCONNECTED
+        _deviceServices.value = emptyList()
+        _bluetoothGatt = null
     }
+
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
     fun readCharacteristic(gattCharacteristic: BluetoothGattCharacteristic) {

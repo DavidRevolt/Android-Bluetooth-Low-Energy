@@ -56,6 +56,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun HomeScreen(
+    onScanResultClick: (deviceAddress: String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.homeUiState.collectAsStateWithLifecycle()
@@ -76,6 +77,7 @@ fun HomeScreen(
                     scanResults = data.scanResults,
                     startBluetoothLeScan = startBluetoothLeScan,
                     stopBluetoothLeScan = stopBluetoothLeScan,
+                    onScanResultClick = onScanResultClick,
                     connectToBleDevice = connectToBleDevice
                 )
             }
@@ -95,6 +97,7 @@ private fun HomeScreenContent(
     scanResults: List<ScanResult>,
     startBluetoothLeScan: () -> Unit,
     stopBluetoothLeScan: () -> Unit,
+    onScanResultClick: (deviceAddress: String) -> Unit,
     connectToBleDevice: (device: BluetoothDevice) -> Unit
 ) {
     val context = LocalContext.current
@@ -194,7 +197,7 @@ private fun HomeScreenContent(
                 ) {
                     scanResults.forEach { scanResult ->
                         item {
-                            Button(onClick = { connectToBleDevice(scanResult.device) }) {
+                            Button(onClick = { onScanResultClick(scanResult.device.address)}) {
                                 Text(text = "Name: ${scanResult.device.name} ADD: ${scanResult.device.address} RSSI: ${scanResult.rssi}")
                             }
                         }

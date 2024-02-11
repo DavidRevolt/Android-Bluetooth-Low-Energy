@@ -14,8 +14,8 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
-fun NavGraphBuilder.homeScreen() {
+fun NavGraphBuilder.homeScreen(onScanResultClick: (deviceAddress: String) -> Unit) {
     composable(route = HOME_ROUTE) {
-        HomeScreen()
+        HomeScreen(onScanResultClick = onScanResultClick)
     }
 }

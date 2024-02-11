@@ -58,7 +58,7 @@ class HomeViewModel @Inject constructor(
     fun connectToDeviceGatt(device: BluetoothDevice) {
         viewModelScope.launch {
             try {
-                ble.connectToDeviceGatt(device = device)
+                //ble.connectToDeviceGatt(device = device)
             } catch (e: Exception) {
                 Log.e("AppLog", "${e.message}")
                 snackbarManager.snackbarMessage("${e.message}")
@@ -69,7 +69,7 @@ class HomeViewModel @Inject constructor(
     fun disconnectFromGatt(bluetoothGatt: BluetoothGatt) {
         viewModelScope.launch {
             try {
-                ble.disconnectFromGatt(bluetoothGatt = bluetoothGatt)
+            //    ble.disconnectFromGatt(bluetoothGatt = bluetoothGatt)
             } catch (e: Exception) {
                 Log.e("AppLog", "${e.message}")
                 snackbarManager.snackbarMessage("${e.message}")

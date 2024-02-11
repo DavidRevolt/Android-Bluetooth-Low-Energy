@@ -1,8 +1,7 @@
 package com.davidrevolt.core.ble
 
 import android.Manifest
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.le.ScanResult
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -29,19 +28,26 @@ class BluetoothLeImpl @Inject constructor(private val bluetoothLeScanService: Bl
     override fun isScanning(): Flow<Boolean> = bluetoothLeScanService.isScanning()
     override fun getScanResults(): Flow<List<ScanResult>> = bluetoothLeScanService.getScanResults()
 
-    @RequiresApi(Build.VERSION_CODES.S)
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @RequiresPermission(allOf  = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT])
 
-    override fun connectToDeviceGatt(device: BluetoothDevice){
+    override fun connectToDeviceGatt(deviceAddress: String){
         // Always stop BLE scan before connecting to a BLE device.
         bluetoothLeScanService.stopBluetoothLeScan()
-        bluetoothLeConnectService.connectToDeviceGatt(device = device)
+        bluetoothLeConnectService.connectToDeviceGatt(deviceAddress = deviceAddress)
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission( Manifest.permission.BLUETOOTH_CONNECT)
-    override fun disconnectFromGatt(bluetoothGatt: BluetoothGatt) =
-        bluetoothLeConnectService.disconnectFromGatt(bluetoothGatt = bluetoothGatt)
+    override fun disconnectFromGatt() =
+        bluetoothLeConnectService.disconnectFromGatt()
+
+    override fun getConnectionState(): Flow<Int> =
+        bluetoothLeConnectService.getConnectionState()
+
+    override fun getDeviceServices(): Flow<List<BluetoothGattService>> =
+        bluetoothLeConnectService.getDeviceServices()
 
 
 }
