@@ -1,8 +1,10 @@
 package com.davidrevolt.feature.home
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanResult
 import android.content.Intent
@@ -25,6 +27,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,7 +62,7 @@ fun HomeScreen(
 
     val startBluetoothLeScan = viewModel::startBluetoothLeScan
     val stopBluetoothLeScan = viewModel::stopBluetoothLeScan
-
+    val connectToBleDevice = viewModel::connectToDeviceGatt
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -71,17 +75,18 @@ fun HomeScreen(
                     isScanning = data.isScanning,
                     scanResults = data.scanResults,
                     startBluetoothLeScan = startBluetoothLeScan,
-                    stopBluetoothLeScan = stopBluetoothLeScan
+                    stopBluetoothLeScan = stopBluetoothLeScan,
+                    connectToBleDevice = connectToBleDevice
                 )
             }
 
             is HomeUiState.Loading -> LoadingWheel()
         }
     }
-
 }
 
 
+@SuppressLint("MissingPermission")
 @RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -90,6 +95,7 @@ private fun HomeScreenContent(
     scanResults: List<ScanResult>,
     startBluetoothLeScan: () -> Unit,
     stopBluetoothLeScan: () -> Unit,
+    connectToBleDevice: (device: BluetoothDevice) -> Unit
 ) {
     val context = LocalContext.current
     val bluetoothAdapter: BluetoothAdapter? =
@@ -120,8 +126,9 @@ private fun HomeScreenContent(
             if (blePermissionsState.allPermissionsGranted) {
                 // If Permission Granted: Activate scan Method HERE!
                 if (bluetoothAdapter == null) {
-                    Toast.makeText(context, "", Toast.LENGTH_SHORT).show()
-                    Log.d("AppLog", "Device doesn't support Bluetooth")
+                    Toast.makeText(context, "Device doesn't support Bluetooth", Toast.LENGTH_SHORT)
+                        .show()
+                    Log.e("AppLog", "Device doesn't support Bluetooth")
                 } else {
                     //Activate Bluetooth
                     val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -130,16 +137,23 @@ private fun HomeScreenContent(
             }
         }
 
-    val onMainFabClick = { // Request BLE Permissions -> Request to Enable Bluetooth -> SCAN!
-        onBlePermissionsGrantedLauncher.launch(blePermissionsState.permissions.map { it.permission }
-            .toTypedArray())
-    }
+    val onPermissionsCheckAndScan =
+        { // Request BLE Permissions -> Request to Enable Bluetooth -> SCAN!
+            onBlePermissionsGrantedLauncher.launch(blePermissionsState.permissions.map { it.permission }
+                .toTypedArray())
+        }
 
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = { AppFabButton(onFabClick = onMainFabClick, icon = AppIcons.Search) }
+        floatingActionButton = {
+            AppFabButton(
+                onFabClick = if (isScanning) stopBluetoothLeScan else onPermissionsCheckAndScan,
+                icon = if (isScanning) AppIcons.Stop else AppIcons.Search,
+                containerColor = if (isScanning) MaterialTheme.colorScheme.error else FloatingActionButtonDefaults.containerColor
+            )
+        }
     ) { innerPadding ->
         IsRefreshing(
             isRefreshingText = "Scanning...",
@@ -171,14 +185,21 @@ private fun HomeScreenContent(
                 // Text 4 user to notify he needs to allow permissions
                 if (!blePermissionsState.allPermissionsGranted && !blePermissionsState.shouldShowRationale)
                     Text("You should allow permissions...")
-                Button(onClick = stopBluetoothLeScan) {
-                    Text("Stop scan")
-                }
 
-                LazyColumn {
-                    item {
-                        scanResults.forEach { Text(text = it.device.address) }
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    scanResults.forEach { scanResult ->
+                        item {
+                            Button(onClick = { connectToBleDevice(scanResult.device) }) {
+                                Text(text = "Name: ${scanResult.device.name} ADD: ${scanResult.device.address} RSSI: ${scanResult.rssi}")
+                            }
+                        }
                     }
+
                 }
             }
         }

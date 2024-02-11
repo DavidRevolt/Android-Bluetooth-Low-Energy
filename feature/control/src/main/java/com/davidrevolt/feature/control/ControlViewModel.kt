@@ -1,4 +1,4 @@
-package com.davidrevolt.feature.home
+package com.davidrevolt.feature.control
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -17,43 +17,22 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class ControlViewModel @Inject constructor(
     private val bluetoothLowEnergyRepository: BluetoothLowEnergyRepository,
     private val ble: BluetoothLe,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 
 
-    val homeUiState = combine(ble.isScanning(), ble.getScanResults()) { isScanning, scanResults ->
-        HomeUiState.Data(isScanning = isScanning, scanResults = scanResults)
+    val controlUiState = combine(ble.isScanning(), ble.getScanResults()) { isScanning, scanResults ->
+        ControlUiState.Data(isScanning = isScanning, scanResults = scanResults)
     }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = HomeUiState.Loading
+            initialValue = ControlUiState.Loading
         )
 
-    fun startBluetoothLeScan() {
-        viewModelScope.launch {
-            try {
-                ble.startBluetoothLeScan()
-            } catch (e: Exception) {
-                Log.e("AppLog", "${e.message}")
-                snackbarManager.snackbarMessage("${e.message}")
-            }
-        }
-    }
-
-    fun stopBluetoothLeScan() {
-        viewModelScope.launch {
-            try {
-                ble.stopBluetoothLeScan()
-            } catch (e: Exception) {
-                Log.e("AppLog", "${e.message}")
-                snackbarManager.snackbarMessage("${e.message}")
-            }
-        }
-    }
 
     fun connectToDeviceGatt(device: BluetoothDevice) {
         viewModelScope.launch {
@@ -78,9 +57,9 @@ class HomeViewModel @Inject constructor(
     }
 }
 
-sealed interface HomeUiState {
+sealed interface ControlUiState {
     data class Data(val isScanning: Boolean, val scanResults: List<ScanResult>) :
-        HomeUiState
+        ControlUiState
 
-    data object Loading : HomeUiState
+    data object Loading : ControlUiState
 }

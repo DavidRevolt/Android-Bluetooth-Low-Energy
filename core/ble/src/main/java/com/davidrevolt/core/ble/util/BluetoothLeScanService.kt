@@ -22,7 +22,7 @@ import javax.inject.Inject
 Online Guide: https://punchthrough.com/android-ble-guide/
 
 * IMPORTANT: Make sure user have permission before using methods.
-* IMPORTANT: Make sure user Device Bluetooth is enabled.
+* IMPORTANT: Make sure user Device Bluetooth is enabled otherwise adapter.scanner is null.
 * IMPORTANT: You should always stop your BLE scan before connecting to a BLE device.
 
 * ScanFilter - set the filtering criteria,
@@ -44,7 +44,7 @@ typically to find a very specific type of device.
 SCAN_MODE_LOW_POWER is used for extremely long-duration scans, or for scans that take place in the background
  */
 
-class BluetoothLeScanner @Inject constructor(
+class BluetoothLeScanService @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
@@ -65,15 +65,19 @@ class BluetoothLeScanner @Inject constructor(
     */
     private val _scanCallback = object : ScanCallback() {
         @RequiresApi(Build.VERSION_CODES.S)
-        @RequiresPermission(anyOf = [Manifest.permission.BLUETOOTH_CONNECT])
+        @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             // IF device is already exists in list it will update
             val ind = _checkIfExists[result.device.address]
-            if(ind !=null)
-                _scanResults.update { _scanResults.value.toMutableList().apply { this[ind] = result } }
+            if (ind != null)
+                _scanResults.update {
+                    _scanResults.value.toMutableList().apply { this[ind] = result }
+                }
             else { // Not exists = New device
-                _scanResults.update { _scanResults.value.toMutableList().apply { this.add(result) } }
-                _checkIfExists[result.device.address] = _scanResults.value.size-1
+                _scanResults.update {
+                    _scanResults.value.toMutableList().apply { this.add(result) }
+                }
+                _checkIfExists[result.device.address] = _scanResults.value.size - 1
                 Log.i(
                     "AppLog",
                     "Found BLE device! Name: ${result.device.name}, address: ${result.device.address}"
@@ -82,38 +86,46 @@ class BluetoothLeScanner @Inject constructor(
         }
 
         override fun onScanFailed(errorCode: Int) {
+            _isScanning.value = false
             Log.e("AppLog", "onScanFailed: code $errorCode")
         }
     }
 
+    /*
+    * Can convert to callback flow with the callback
+    * but to stop scan we need to stop collection from flow instead using stopBluetoothLeScan()
+    */
     @RequiresApi(Build.VERSION_CODES.S)
-    @RequiresPermission(anyOf = [Manifest.permission.BLUETOOTH_SCAN])
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN])
     fun startBluetoothLeScan() {
         if (_bluetoothAdapter != null && _bluetoothAdapter.isEnabled) {
-            if (_isScanning.value) {
+            _scanResults.update { _scanResults.value.toMutableList().apply { this.clear() } }
+            _checkIfExists.clear()
+            if (_isScanning.value)
                 stopBluetoothLeScan()
-                _scanResults.update { _scanResults.value.toMutableList().apply { this.clear() } }
-                _checkIfExists.clear()
-            }
             val scanSettings = ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build()
             val bleScanner = _bluetoothAdapter.bluetoothLeScanner
             bleScanner.startScan(null, scanSettings, _scanCallback)
             _isScanning.value = true
+            Log.i("AppLog", "Bluetooth scan start")
         } else {
             Log.e("AppLog", "Device doesn't support Bluetooth or Bluetooth is disabled")
         }
     }
 
+    // Will throw exception if bluetooth isn't enable -> cause scanner will get null
     @RequiresApi(Build.VERSION_CODES.S)
-    @RequiresPermission(anyOf = [Manifest.permission.BLUETOOTH_SCAN])
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN])
     fun stopBluetoothLeScan() {
-        if (_bluetoothAdapter != null) {
-            val bleScanner = _bluetoothAdapter.bluetoothLeScanner
-            bleScanner.stopScan(_scanCallback)
-            Log.i("AppLog", "Bluetooth scanning stopped")
+        if (_isScanning.value){
             _isScanning.value = false
+            _bluetoothAdapter?.let { bluetoothAdapter ->
+                val bleScanner = bluetoothAdapter.bluetoothLeScanner
+                bleScanner.stopScan(_scanCallback)
+                Log.i("AppLog", "Bluetooth scanning stopped")
+            }
         }
     }
 
