@@ -108,7 +108,6 @@ class BluetoothLeConnectService @Inject constructor(
             value: ByteArray,
             status: Int
         ) {
-
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
@@ -137,7 +136,7 @@ class BluetoothLeConnectService @Inject constructor(
         _bluetoothGatt = device?.connectGatt(context, false, gattCallback, TRANSPORT_LE)
     }
 
-    //TODO: Check if need to delete log because callback as methods already
+
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     fun disconnectFromGatt() {

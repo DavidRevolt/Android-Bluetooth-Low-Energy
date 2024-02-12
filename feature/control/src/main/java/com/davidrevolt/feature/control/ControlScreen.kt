@@ -1,6 +1,5 @@
 package com.davidrevolt.feature.control
 
-import android.bluetooth.BluetoothGattService
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.davidrevolt.core.designsystem.components.LoadingWheel
+import com.davidrevolt.core.model.CustomGattService
 
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -52,7 +52,7 @@ fun ControlScreen(
 @Composable
 private fun ControlScreenContent(
     connectionState: String,
-    deviceServices: List<BluetoothGattService>,
+    deviceServices: List<CustomGattService>,
     connectToDeviceGatt: () -> Unit,
     disconnectFromGatt: () -> Unit
 ) {

@@ -54,7 +54,7 @@ class BluetoothLeScanService @Inject constructor(
 
     private var _isScanning = MutableStateFlow(false)
 
-    // Holds devices found through scanning.
+    // Holds devices found through scanning - scanning keep returning the same device with dif rssi.
     private val _checkIfExists = mutableMapOf<String, Int>() // MAC to List Ind
     private val _scanResults = MutableStateFlow(mutableListOf<ScanResult>())
 

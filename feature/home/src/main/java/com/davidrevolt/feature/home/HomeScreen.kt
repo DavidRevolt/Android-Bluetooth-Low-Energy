@@ -4,9 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.ScanResult
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -49,6 +47,7 @@ import com.davidrevolt.core.designsystem.components.isRefreshing.IsRefreshing
 import com.davidrevolt.core.designsystem.components.isRefreshing.rememberIsRefreshingState
 import com.davidrevolt.core.designsystem.drawable.homeBanner
 import com.davidrevolt.core.designsystem.icons.AppIcons
+import com.davidrevolt.core.model.CustomScanResult
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
@@ -60,10 +59,9 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.homeUiState.collectAsStateWithLifecycle()
-
     val startBluetoothLeScan = viewModel::startBluetoothLeScan
     val stopBluetoothLeScan = viewModel::stopBluetoothLeScan
-    val connectToBleDevice = viewModel::connectToDeviceGatt
+
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -78,7 +76,6 @@ fun HomeScreen(
                     startBluetoothLeScan = startBluetoothLeScan,
                     stopBluetoothLeScan = stopBluetoothLeScan,
                     onScanResultClick = onScanResultClick,
-                    connectToBleDevice = connectToBleDevice
                 )
             }
 
@@ -94,11 +91,10 @@ fun HomeScreen(
 @Composable
 private fun HomeScreenContent(
     isScanning: Boolean,
-    scanResults: List<ScanResult>,
+    scanResults: List<CustomScanResult>,
     startBluetoothLeScan: () -> Unit,
     stopBluetoothLeScan: () -> Unit,
-    onScanResultClick: (deviceAddress: String) -> Unit,
-    connectToBleDevice: (device: BluetoothDevice) -> Unit
+    onScanResultClick: (deviceAddress: String) -> Unit
 ) {
     val context = LocalContext.current
     val bluetoothAdapter: BluetoothAdapter? =
@@ -197,8 +193,8 @@ private fun HomeScreenContent(
                 ) {
                     scanResults.forEach { scanResult ->
                         item {
-                            Button(onClick = { onScanResultClick(scanResult.device.address)}) {
-                                Text(text = "Name: ${scanResult.device.name} ADD: ${scanResult.device.address} RSSI: ${scanResult.rssi}")
+                            Button(onClick = { onScanResultClick(scanResult.address)}) {
+                                Text(text = "Name: ${scanResult.name} ADD: ${scanResult.address} RSSI: ${scanResult.rssi}")
                             }
                         }
                     }
