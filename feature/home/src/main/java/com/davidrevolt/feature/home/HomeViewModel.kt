@@ -3,9 +3,9 @@ package com.davidrevolt.feature.home
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.davidrevolt.core.data.repository.BluetoothLowEnergyRepository
+import com.davidrevolt.core.ble.BluetoothLe
+import com.davidrevolt.core.ble.model.CustomScanResult
 import com.davidrevolt.core.data.utils.snackbarmanager.SnackbarManager
-import com.davidrevolt.core.model.CustomScanResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val bluetoothLowEnergyRepository: BluetoothLowEnergyRepository,
+    private val bluetoothLowEnergyRepository: BluetoothLe,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
 

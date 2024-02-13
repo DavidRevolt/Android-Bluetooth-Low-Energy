@@ -1,4 +1,4 @@
-package com.davidrevolt.core.model
+package com.davidrevolt.core.ble.model
 
 import java.util.UUID
 

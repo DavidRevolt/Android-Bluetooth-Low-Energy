@@ -41,13 +41,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.davidrevolt.core.ble.model.CustomScanResult
 import com.davidrevolt.core.designsystem.components.AppFabButton
 import com.davidrevolt.core.designsystem.components.LoadingWheel
 import com.davidrevolt.core.designsystem.components.isRefreshing.IsRefreshing
 import com.davidrevolt.core.designsystem.components.isRefreshing.rememberIsRefreshingState
 import com.davidrevolt.core.designsystem.drawable.homeBanner
 import com.davidrevolt.core.designsystem.icons.AppIcons
-import com.davidrevolt.core.model.CustomScanResult
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
@@ -194,7 +194,7 @@ private fun HomeScreenContent(
                     scanResults.forEach { scanResult ->
                         item {
                             Button(onClick = { onScanResultClick(scanResult.address)}) {
-                                Text(text = "Name: ${scanResult.name} ADD: ${scanResult.address} RSSI: ${scanResult.rssi}")
+                                Text(text = "Name: ${scanResult.name} ADD: ${scanResult.address} RSSI: ${scanResult.rssi} manufacturer: ${scanResult.manufacturer}")
                             }
                         }
                     }

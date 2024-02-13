@@ -4,19 +4,20 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.davidrevolt.core.data.repository.BluetoothLowEnergyRepository
+import com.davidrevolt.core.ble.BluetoothLe
+import com.davidrevolt.core.ble.model.CustomGattService
 import com.davidrevolt.core.data.utils.snackbarmanager.SnackbarManager
-import com.davidrevolt.core.model.CustomGattService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class ControlViewModel @Inject constructor(
-    private val bluetoothLowEnergyRepository: BluetoothLowEnergyRepository,
+    private val bluetoothLowEnergyRepository: BluetoothLe,
     savedStateHandle: SavedStateHandle,
     private val snackbarManager: SnackbarManager
 ) : ViewModel() {
@@ -69,6 +70,21 @@ class ControlViewModel @Inject constructor(
             3 -> "Disconnecting..."
             else -> "Unknown connection state!!"
         }
+
+    fun readCharacteristic(characteristicUUID: UUID, serviceUUID: UUID) {
+        viewModelScope.launch {
+            try {
+                bluetoothLowEnergyRepository.readCharacteristic(
+                    characteristicUUID = characteristicUUID,
+                    serviceUUID = serviceUUID
+                )
+            } catch (e: Exception) {
+                Log.e("AppLog", "${e.message}")
+                snackbarManager.snackbarMessage("${e.message}")
+            }
+        }
+    }
+
 
 }
 

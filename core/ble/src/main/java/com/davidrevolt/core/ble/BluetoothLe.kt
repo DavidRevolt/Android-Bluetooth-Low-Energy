@@ -1,18 +1,20 @@
 package com.davidrevolt.core.ble
 
-import android.bluetooth.BluetoothGattService
-import android.bluetooth.le.ScanResult
+import com.davidrevolt.core.ble.model.CustomGattService
+import com.davidrevolt.core.ble.model.CustomScanResult
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 interface BluetoothLe{
     fun startBluetoothLeScan()
     fun stopBluetoothLeScan()
     fun isScanning(): Flow<Boolean>
-    fun getScanResults(): Flow<List<ScanResult>>
+    fun getScanResults(): Flow<List<CustomScanResult>>
 
     fun connectToDeviceGatt(deviceAddress: String)
     fun disconnectFromGatt()
 
     fun getConnectionState(): Flow<Int>
-    fun getDeviceServices(): Flow<List<BluetoothGattService>>
+    fun getDeviceServices(): Flow<List<CustomGattService>>
+    fun readCharacteristic(characteristicUUID: UUID, serviceUUID: UUID)
 }

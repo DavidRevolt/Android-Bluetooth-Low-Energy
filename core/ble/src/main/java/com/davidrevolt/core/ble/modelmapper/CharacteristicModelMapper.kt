@@ -1,15 +1,16 @@
-package com.davidrevolt.core.data.modelmapper
+package com.davidrevolt.core.ble.modelmapper
 
 import android.bluetooth.BluetoothGattCharacteristic
-import com.davidrevolt.core.data.utils.asName
-import com.davidrevolt.core.model.PropertiesAsEnum
+import com.davidrevolt.core.ble.model.CustomGattCharacteristics
+import com.davidrevolt.core.ble.model.PropertiesAsEnum
+import java.util.UUID
 
 
 /*
 * Convert BluetoothGattCharacteristic to CustomGattCharacteristics which is more readable Characteristic obj
 */
 fun BluetoothGattCharacteristic.asCustomDeviceCharacteristics() =
-    com.davidrevolt.core.model.CustomGattCharacteristics(
+    CustomGattCharacteristics(
         uuid = this.uuid,
         name = this.uuid.asName(),
         properties = this.propertiesAsList(),
@@ -18,6 +19,12 @@ fun BluetoothGattCharacteristic.asCustomDeviceCharacteristics() =
         readBytes = null
     )
 
+
+//TODO: Impl method
+// TODO: Move this to other file
+fun UUID.asName(): String {
+    return "UnKnown"
+}
 
 
 /*
@@ -43,8 +50,8 @@ fun BluetoothGattCharacteristic.containsProperty(property: Int): Boolean {
 */
 fun BluetoothGattCharacteristic.propertiesAsList(): List<PropertiesAsEnum> {
     val propertyList = mutableListOf<PropertiesAsEnum>()
-    com.davidrevolt.core.model.PropertiesAsEnum.entries.forEach { propertiesAsEnum ->
-        if(this.containsProperty(propertiesAsEnum.value))
+    PropertiesAsEnum.entries.forEach { propertiesAsEnum ->
+        if (this.containsProperty(propertiesAsEnum.value))
             propertyList.add(propertiesAsEnum)
     }
     return propertyList

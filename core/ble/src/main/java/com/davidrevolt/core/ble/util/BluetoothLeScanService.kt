@@ -12,6 +12,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
+import com.davidrevolt.core.ble.model.CustomScanResult
+import com.davidrevolt.core.ble.modelmapper.asCustomScanResult
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +58,7 @@ class BluetoothLeScanService @Inject constructor(
 
     // Holds devices found through scanning - scanning keep returning the same device with dif rssi.
     private val _checkIfExists = mutableMapOf<String, Int>() // MAC to List Ind
-    private val _scanResults = MutableStateFlow(mutableListOf<ScanResult>())
+    private val _scanResult = MutableStateFlow(mutableListOf<CustomScanResult>())
 
 
     /*
@@ -70,14 +72,14 @@ class BluetoothLeScanService @Inject constructor(
             // IF device is already exists in list it will update
             val ind = _checkIfExists[result.device.address]
             if (ind != null)
-                _scanResults.update {
-                    _scanResults.value.toMutableList().apply { this[ind] = result }
+                _scanResult.update {
+                    _scanResult.value.toMutableList().apply { this[ind] = result.asCustomScanResult() }
                 }
             else { // Not exists = New device
-                _scanResults.update {
-                    _scanResults.value.toMutableList().apply { this.add(result) }
+                _scanResult.update {
+                    _scanResult.value.toMutableList().apply { this.add(result.asCustomScanResult()) }
                 }
-                _checkIfExists[result.device.address] = _scanResults.value.size - 1
+                _checkIfExists[result.device.address] = _scanResult.value.size - 1
                 Log.i(
                     "AppLog",
                     "Found BLE device! Name: ${result.device.name}, address: ${result.device.address}"
@@ -99,7 +101,7 @@ class BluetoothLeScanService @Inject constructor(
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN])
     fun startBluetoothLeScan() {
         if (_bluetoothAdapter != null && _bluetoothAdapter.isEnabled) {
-            _scanResults.update { _scanResults.value.toMutableList().apply { this.clear() } }
+            _scanResult.update { _scanResult.value.toMutableList().apply { this.clear() } }
             _checkIfExists.clear()
             if (_isScanning.value)
                 stopBluetoothLeScan()
@@ -131,6 +133,6 @@ class BluetoothLeScanService @Inject constructor(
 
     fun isScanning() = _isScanning.asStateFlow()
 
-    fun getScanResults() = _scanResults.asStateFlow()
+    fun getScanResults() = _scanResult.asStateFlow()
 }
 
