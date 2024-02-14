@@ -8,6 +8,6 @@ import com.davidrevolt.core.ble.model.CustomGattService
 fun BluetoothGattService.asCustomGattService() =
     CustomGattService(
         uuid = this.uuid,
-        name = this.uuid.asName(),
+        name = "uuidToNameMethod",
         characteristics = this.characteristics.map { bluetoothGattCharacteristic -> bluetoothGattCharacteristic.asCustomDeviceCharacteristics() }
     )

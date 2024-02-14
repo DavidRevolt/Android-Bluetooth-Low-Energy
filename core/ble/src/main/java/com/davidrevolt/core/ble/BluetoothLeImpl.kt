@@ -30,7 +30,8 @@ class BluetoothLeImpl @Inject constructor(
     override fun stopBluetoothLeScan() = bluetoothLeScanService.stopBluetoothLeScan()
 
     override fun isScanning(): Flow<Boolean> = bluetoothLeScanService.isScanning()
-    override fun getScanResults(): Flow<List<CustomScanResult>> = bluetoothLeScanService.getScanResults()
+    override fun getScanResults(): Flow<List<CustomScanResult>> =
+        bluetoothLeScanService.getScanResults()
 
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -55,10 +56,17 @@ class BluetoothLeImpl @Inject constructor(
 
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
-    override fun readCharacteristic(characteristicUUID: UUID, serviceUUID: UUID) =
-        bluetoothLeConnectService.readCharacteristic(
-            characteristicUUID = characteristicUUID,
-            serviceUUID = serviceUUID
-        )
+    override fun readCharacteristic(characteristicUUID: UUID) =
+        bluetoothLeConnectService.readCharacteristic(characteristicUUID = characteristicUUID)
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
+    override fun writeCharacteristic(
+        characteristicUUID: UUID,
+        value: ByteArray
+    ) = bluetoothLeConnectService.writeCharacteristic(
+        characteristicUUID = characteristicUUID,
+        value = value
+    )
 
 }

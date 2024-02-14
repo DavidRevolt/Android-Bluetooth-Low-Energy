@@ -82,7 +82,7 @@ private fun ControlScreenContent(
     deviceServices: List<CustomGattService>,
     connectToDeviceGatt: () -> Unit,
     disconnectFromGatt: () -> Unit,
-    onCharacteristicClick: (serviceUUID: UUID, characteristicUUID: UUID) -> Unit,
+    onCharacteristicClick: (characteristicUUID: UUID) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -105,27 +105,13 @@ private fun ControlScreenContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             deviceServices.forEach { service ->
-/*                item {
-                    val characteristicsTable = service.characteristics.joinToString(
-                        separator = "\n|--",
-                        prefix = "|--"
-                    ) { it.uuid.toString() }
-                    Text(
-                        text = "\nService ${service.uuid}\n" +
-                                "Characteristics:\n" +
-                                characteristicsTable
-                    )
-                }*/
                 item {
                     Text(text = "Service UUID: ${service.uuid}")
                     Text(text = "Service Name: ${service.name}")
                     service.characteristics.forEach { characteristic ->
                         CharacteristicDetails(
                             modifier = Modifier.clickable(onClick = {
-                                onCharacteristicClick(
-                                    characteristic.uuid,
-                                    service.uuid
-                                )
+                                onCharacteristicClick(characteristic.uuid)
                             }),
                             characteristic = characteristic
                         )

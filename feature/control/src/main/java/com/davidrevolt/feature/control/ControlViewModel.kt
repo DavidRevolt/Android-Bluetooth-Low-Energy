@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.davidrevolt.core.ble.BluetoothLe
 import com.davidrevolt.core.ble.model.CustomGattService
+import com.davidrevolt.core.ble.util.BASE_UUID
 import com.davidrevolt.core.data.utils.snackbarmanager.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -71,13 +72,13 @@ class ControlViewModel @Inject constructor(
             else -> "Unknown connection state!!"
         }
 
-    fun readCharacteristic(characteristicUUID: UUID, serviceUUID: UUID) {
+    fun readCharacteristic(characteristicUUID: UUID) {
         viewModelScope.launch {
             try {
                 bluetoothLowEnergyRepository.readCharacteristic(
                     characteristicUUID = characteristicUUID,
-                    serviceUUID = serviceUUID
                 )
+              //  writeCharacteristic()
             } catch (e: Exception) {
                 Log.e("AppLog", "${e.message}")
                 snackbarManager.snackbarMessage("${e.message}")
@@ -85,6 +86,19 @@ class ControlViewModel @Inject constructor(
         }
     }
 
+    fun writeCharacteristic(characteristicUUID: UUID = UUID.fromString(String.format(BASE_UUID, "ff04")), value: ByteArray =byteArrayOf(2) ) {
+        viewModelScope.launch {
+            try {
+                bluetoothLowEnergyRepository.writeCharacteristic(
+                    characteristicUUID = characteristicUUID,
+                    value=value
+                )
+            } catch (e: Exception) {
+                Log.e("AppLog", "${e.message}")
+                snackbarManager.snackbarMessage("${e.message}")
+            }
+        }
+    }
 
 }
 

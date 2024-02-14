@@ -16,5 +16,6 @@ interface BluetoothLe{
 
     fun getConnectionState(): Flow<Int>
     fun getDeviceServices(): Flow<List<CustomGattService>>
-    fun readCharacteristic(characteristicUUID: UUID, serviceUUID: UUID)
+    fun readCharacteristic(characteristicUUID: UUID)
+    fun writeCharacteristic(characteristicUUID: UUID, value: ByteArray)
 }
