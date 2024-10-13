@@ -13,17 +13,22 @@ object GattCharacteristic {
 
     /**
      * Convert The Characteristic.UUID TO Readable Name
+     * Known UUID'S list saved below as val (and parsed with reflection)
      * */
     fun BluetoothGattCharacteristic.toName( ): String {
         if(uuidToName ==null)
             initUuidToNameMap()
         val name = uuidToName?.get(uuid) ?: "Unknown Characteristic"
-        return this.uuid.toString() + " (" + name + ")"
+        return name
     }
 
-    fun BluetoothGattCharacteristic.containsProperty(property: Int): Boolean {
-        return properties and property != 0
-    }
+    /**
+     * Return if Characteristic contains property
+     * e.g: BluetoothGattCharacteristic.containsProperty(BluetoothGattCharacteristic.PROPERTY_READ)
+     * */
+    fun BluetoothGattCharacteristic.containsProperty(property: Int): Boolean =
+       properties and property != 0
+
 
     /**
      * Convert Characteristic.properties value to list of all the supported properties as enum

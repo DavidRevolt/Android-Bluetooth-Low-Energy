@@ -1,4 +1,4 @@
-package com.davidrevolt.core.ble.util
+package com.davidrevolt.core.ble.manger
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -16,6 +16,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
+import com.davidrevolt.core.ble.XiaomiProto
 import com.davidrevolt.core.ble.model.CustomGattService
 import com.davidrevolt.core.ble.modelmapper.asCustomGattService
 import com.davidrevolt.core.ble.util.GattCharacteristic.containsProperty
@@ -32,10 +33,10 @@ Online Guide: https://punchthrough.com/android-ble-guide/
 
 * IMPORTANT: You should always stop your BLE scan before connecting to a BLE device.
 
- */
+*/
 
 
-class BluetoothLeConnectService @Inject constructor(
+class BluetoothLeConnect @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val _bluetoothManager: BluetoothManager? =
@@ -45,12 +46,26 @@ class BluetoothLeConnectService @Inject constructor(
     private var _bluetoothGatt: BluetoothGatt? = null
     private val _connectionState = MutableStateFlow(BluetoothProfile.STATE_DISCONNECTED)
 
-    // Convert the BluetoothGattService and BluetoothGattCharacteristic of the device to custom data class
+    // Convert the BluetoothGattService and BluetoothGattCharacteristic to custom data class
     private val _deviceServices = MutableStateFlow<List<CustomGattService>>(emptyList())
 
     // Holds all the BluetoothGattCharacteristic of the device
-    private val _availableCharacteristics = mutableMapOf<UUID,BluetoothGattCharacteristic>()
+    private val _availableCharacteristics = mutableMapOf<UUID, BluetoothGattCharacteristic>()
 
+
+    // Xiaomi Specific UUIDs
+    private val _xiaomiUUIDs = mapOf<UUID, Set<UUID>>(
+        UUID.fromString("16187f00-0000-1000-8000-00807f9b34fb") to setOf(
+            UUID.fromString("16187f01-0000-1000-8000-00807f9b34fb"), //READ
+            UUID.fromString("16187f02-0000-1000-8000-00807f9b34fb"), //WRITE
+            UUID.fromString("16187f03-0000-1000-8000-00807f9b34fb"), //Activity Data
+            UUID.fromString("16187f04-0000-1000-8000-00807f9b34fb") //Data Upload
+        )
+    )
+    private var _characteristicCommandRead: BluetoothGattCharacteristic? = null
+    private var _characteristicCommandWrite: BluetoothGattCharacteristic? = null
+    private var _characteristicActivityData: BluetoothGattCharacteristic? = null
+    private var _characteristicDataUpload: BluetoothGattCharacteristic? = null
 
     fun getConnectionState() = _connectionState.asStateFlow()
     fun getDeviceServices() = _deviceServices.asStateFlow()
@@ -97,14 +112,25 @@ class BluetoothLeConnectService @Inject constructor(
         @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             _deviceServices.value = emptyList()
+            _availableCharacteristics.clear()
             val deviceName = gatt.device.name ?: gatt.device.address
-            Log.i("AppLog", "Discovered ${gatt.services.size} services for $deviceName")
+            Log.i("AppLog", "\nDiscovered ${gatt.services.size} services for $deviceName:")
 
             _deviceServices.value = gatt.services.map(BluetoothGattService::asCustomGattService)
             gatt.services.forEach { service ->
+                // Fill availableCharacteristics map[UUID,Characteristic]
                 service.characteristics.forEach { bluetoothGattCharacteristic ->
-                    _availableCharacteristics[bluetoothGattCharacteristic.uuid] = bluetoothGattCharacteristic
+                    _availableCharacteristics[bluetoothGattCharacteristic.uuid] =
+                        bluetoothGattCharacteristic
                 }
+                val xiaomiUUIDs = _xiaomiUUIDs[service.uuid]
+                xiaomiUUIDs?.let {
+                    _characteristicCommandRead = _availableCharacteristics[it.elementAt(0)]
+                    _characteristicCommandWrite = _availableCharacteristics[it.elementAt(1)]
+                    _characteristicActivityData = _availableCharacteristics[it.elementAt(2)]
+                    _characteristicDataUpload = _availableCharacteristics[it.elementAt(3)]
+                }
+
                 val characteristicsTable = service.characteristics.joinToString(
                     separator = "\n|--",
                     prefix = "|--"
@@ -123,15 +149,14 @@ class BluetoothLeConnectService @Inject constructor(
             value: ByteArray,
             status: Int
         ) {
-            _availableCharacteristics[characteristic.uuid] = characteristic
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
                         Log.i(
                             "AppLog",
-                            "Read characteristic $uuid:\n${value.toHexString()}"
+                            "Successfully read characteristic $uuid:\n${value.toHexString()}"
                         )
-
+                        // Log.i("AppLog", "Read characteristic ${value.toString(Charsets.UTF_8)}")
                         val newList = _deviceServices.value.map { customGattService ->
                             customGattService.copy(characteristics = customGattService.characteristics.map {
                                 if (it.uuid == characteristic.uuid)
@@ -141,11 +166,6 @@ class BluetoothLeConnectService @Inject constructor(
                             })
                         }
                         _deviceServices.value = newList
-                        Log.i(
-                            "AppLog",
-                            "Read characteristic ${value.toString(Charsets.UTF_8)}"
-                        )
-
                     }
 
                     BluetoothGatt.GATT_READ_NOT_PERMITTED -> {
@@ -153,10 +173,7 @@ class BluetoothLeConnectService @Inject constructor(
                     }
 
                     else -> {
-                        Log.e(
-                            "AppCharacteristicRead",
-                            "Characteristic read failed for $uuid, error: $status"
-                        )
+                        Log.e("AppLog", "Characteristic read failed for $uuid, error: $status")
                     }
                 }
             }
@@ -167,18 +184,20 @@ class BluetoothLeConnectService @Inject constructor(
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            _availableCharacteristics[characteristic.uuid] = characteristic
             with(characteristic) {
                 when (status) {
                     BluetoothGatt.GATT_SUCCESS -> {
-                        Log.i("AppLog", "Wrote to characteristic $uuid | value: ${value.toHexString()}")
+                        Log.i("AppLog", "Successfully wrote to characteristic $uuid}")
                     }
+
                     BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
                         Log.e("AppLog", "Write exceeded connection ATT MTU!")
                     }
+
                     BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
                         Log.e("AppLog", "Write not permitted for $uuid!")
                     }
+
                     else -> {
                         Log.e("AppLog", "Characteristic write failed for $uuid, error: $status")
                     }
@@ -211,12 +230,13 @@ class BluetoothLeConnectService @Inject constructor(
         _bluetoothGatt = null
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
     fun readCharacteristic(characteristicUUID: UUID) {
         val characteristic = _availableCharacteristics[characteristicUUID]
         _bluetoothGatt?.readCharacteristic(characteristic)
     }
+
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_CONNECT])
@@ -229,8 +249,8 @@ class BluetoothLeConnectService @Inject constructor(
                 else -> error("Characteristic ${characteristic.uuid} cannot be written to")
             }
             _bluetoothGatt?.writeCharacteristic(characteristic, value, writeType)
-        }else{
-            Log.e("AppLog", "Characteristic uuid $characteristicUUID. not exists in device")
+        } else {
+            Log.e("AppLog", "Characteristic uuid $characteristicUUID not exists in device")
         }
     }
 

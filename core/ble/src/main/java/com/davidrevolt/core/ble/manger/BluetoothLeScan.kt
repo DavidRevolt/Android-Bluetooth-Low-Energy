@@ -1,4 +1,4 @@
-package com.davidrevolt.core.ble.util
+package com.davidrevolt.core.ble.manger
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -46,7 +46,7 @@ typically to find a very specific type of device.
 SCAN_MODE_LOW_POWER is used for extremely long-duration scans, or for scans that take place in the background
  */
 
-class BluetoothLeScanService @Inject constructor(
+class BluetoothLeScan @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
@@ -93,10 +93,6 @@ class BluetoothLeScanService @Inject constructor(
         }
     }
 
-    /*
-    * Can convert to callback flow with the callback
-    * but to stop scan we need to stop collection from flow instead using stopBluetoothLeScan()
-    */
     @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN])
     fun startBluetoothLeScan() {

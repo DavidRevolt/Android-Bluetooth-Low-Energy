@@ -86,7 +86,7 @@ class ControlViewModel @Inject constructor(
         }
     }
 
-    fun writeCharacteristic(characteristicUUID: UUID = UUID.fromString(String.format(BASE_UUID, "ff04")), value: ByteArray =byteArrayOf(2) ) {
+    fun writeCharacteristic(characteristicUUID: UUID = UUID.fromString(String.format(BASE_UUID, "ff04")), value: ByteArray ="David".toByteArray() ) {
         viewModelScope.launch {
             try {
                 bluetoothLowEnergyRepository.writeCharacteristic(
