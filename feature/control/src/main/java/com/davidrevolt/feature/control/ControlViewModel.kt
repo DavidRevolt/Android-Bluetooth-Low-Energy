@@ -75,7 +75,6 @@ class ControlViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 bluetoothLeService.writeCharacteristic(characteristicUUID, value)
-                delay(5000)
             } catch (e: Exception) {
                 _uiEvent.emit(UiEvent.ShowSnackbar("${e.message}"))
             }
